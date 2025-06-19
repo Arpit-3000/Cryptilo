@@ -5,6 +5,7 @@ import bs58 from "bs58";
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, child } from "firebase/database";
 import { rtdb } from "../utils/firebaseConfig"
+import SHA256 from "crypto-js/sha256";
 
 
 const db1 = rtdb;
@@ -24,32 +25,36 @@ const Register = () => {
     if (!mnemonic) navigate("/");
   }, [mnemonic]);
 
-  const handleRegister = async (mnemonic) => {
-    setError("");
-    if (!username || !password || !confirmPassword) {
-      return setError("All fields are required.");
-    }
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
-    }
+ const handleRegister = async (mnemonic) => {
+  setError("");
 
-    const dbRef = ref(db1);
-    const snapshot = await get(child(dbRef, `users/${username}`));
-    if (snapshot.exists()) {
-      return setError("Username already exists.");
-    }
+  if (!username || !password || !confirmPassword) {
+    return setError("All fields are required.");
+  }
+  if (password !== confirmPassword) {
+    return setError("Passwords do not match.");
+  }
 
-    const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
-    const seedBase58 = bs58.encode(seed);
+  const dbRef = ref(db1);
+  const snapshot = await get(child(dbRef, `users/${username}`));
+  if (snapshot.exists()) {
+    return setError("Username already exists.");
+  }
 
-    await set(ref(db1, `users/${username}`), {
-      password, // Consider hashing in production
-      createdAt: new Date().toISOString(),
-    });
+  
+  
 
-    alert("Account created successfully!");
-   navigate("/wallet", { state: { seedBase58: bs58.encode(seed) } });
-  };
+  // Hash password and seedBase58
+  const hashedPassword = SHA256(password).toString();
+  
+
+  // Store hashed credentials and original base58 seed for local use
+  await set(ref(db1, `users/${username}`), {
+    password: hashedPassword,
+    createdAt: new Date().toISOString(),
+  });
+  navigate("/wallet", { state: { username,mnemonic } });
+};
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-white via-gray-100 to-purple-100 dark:from-black dark:via-gray-900 dark:to-purple-900 px-4 font-sans transition-colors duration-700">
