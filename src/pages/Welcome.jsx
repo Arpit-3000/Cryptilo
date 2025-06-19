@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Lock, Globe } from "lucide-react";
+import { generateMnemonic } from "bip39";
+import { useNavigate } from "react-router-dom";
+
+
 
 const WelcomePage = () => {
   const [showOptions, setShowOptions] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [mnemonic, setMnemonic] = useState("");
+
+  const navigate = useNavigate();
+
+
+  const handleCreateWallet= async()=>{
+    
+    const mn = generateMnemonic();
+    setMnemonic(mn);
+    console.log(mn);
+  
+  }
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -77,6 +93,7 @@ const WelcomePage = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 className="bg-white dark:bg-gray-800 dark:text-white text-purple-800 font-medium px-6 py-2 rounded-full w-48 shadow-md"
+                onClick={()=>{handleCreateWallet()}}
               >
                 Create Wallet
               </motion.button>
@@ -116,6 +133,57 @@ const WelcomePage = () => {
               <p className="text-sm leading-snug">{item.desc}</p>
             </motion.div>
           ))}
+
+        {/* Mnemonic Popup Modal */}
+<AnimatePresence>
+  {mnemonic && (
+    <motion.div
+      initial={{ opacity: 0, y: "-50%", scale: 0.9 }}
+      animate={{ opacity: 1, y: "0%", scale: 1 }}
+      exit={{ opacity: 0, y: "-50%", scale: 0.9 }}
+      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-2 sm:px-4"
+    >
+      <motion.div
+        className="w-full max-w-3xl bg-white dark:bg-gray-900 p-6 sm:p-10 rounded-3xl shadow-2xl text-center border border-purple-300 dark:border-purple-700 overflow-y-auto max-h-[90vh]"
+      >
+        <h2 className="text-2xl sm:text-3xl font-bold text-purple-700 dark:text-purple-300 mb-4">
+          Your Wallet Recovery Phrase
+        </h2>
+        <p className="text-sm sm:text-md text-gray-600 dark:text-gray-300 mb-6 px-2">
+          Write down these 12 words in order and store them securely.
+        </p>
+
+        {/* Responsive Mnemonic Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8 px-2">
+          {mnemonic.split(" ").map((word, index) => (
+            <div
+              key={index}
+              className="bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-white py-3 px-4 rounded-lg shadow-sm border border-purple-200 dark:border-purple-600 font-mono text-sm tracking-wide flex items-center"
+            >
+              <span className="font-semibold text-purple-500 mr-2">{index + 1}.</span>
+              {word}
+            </div>
+          ))}
+        </div>
+
+        <button
+  onClick={() => {
+    navigate("/register", { state: { mnemonic } });
+    setMnemonic("");
+  }}
+  className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-full transition"
+>
+  Click to Continue
+</button>
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
+
+
         </div>
       </div>
     </div>
