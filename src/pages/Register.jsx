@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import * as bip39 from "bip39";
-import bs58 from "bs58";
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, child } from "firebase/database";
+
+import { ref, set, get, child } from "firebase/database";
 import { rtdb } from "../utils/firebaseConfig"
 import SHA256 from "crypto-js/sha256";
-
+import CryptoJS from "crypto-js";
 
 const db1 = rtdb;
 
@@ -44,13 +42,15 @@ const Register = () => {
   
   
 
-  // Hash password and seedBase58
+  // Hash password and mnemonic
   const hashedPassword = SHA256(password).toString();
+  const encryptedMnemonic = CryptoJS.AES.encrypt(mnemonic, password).toString();
   
 
-  // Store hashed credentials and original base58 seed for local use
+
   await set(ref(db1, `users/${username}`), {
     password: hashedPassword,
+    mnemonic: encryptedMnemonic,
     createdAt: new Date().toISOString(),
   });
   navigate("/wallet", { state: { username,mnemonic } });

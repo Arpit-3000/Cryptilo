@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getDatabase, ref, get, remove } from 'firebase/database';
-import { derivePath } from 'ed25519-hd-key';
-import nacl from 'tweetnacl';
-import bs58 from 'bs58';
-import * as bip39 from 'bip39';
+import toast from 'react-hot-toast';
 import SHA256 from "crypto-js/sha256";
+import CryptoJS from "crypto-js";
 
 const ManageWallets = () => {
     const location = useLocation();
@@ -47,35 +45,67 @@ const ManageWallets = () => {
     };
 
     const handleRemoveWallet = async () => {
-        const db = getDatabase();
-        await remove(ref(db, `users/${username}/wallets/${selectedWallet.index}`));
-        setWallets(wallets.filter((w) => w.index !== selectedWallet.index));
-        setShowPopup(false);
+        if (selectedWallet.index === "0" || selectedWallet.index === 0) {
+            toast.error("You cannot delete your primary wallet.", {
+                icon: '⚠️',
+            });
+            return;
+        }
+
+        try {
+            const db = getDatabase();
+            await remove(ref(db, `users/${username}/wallets/${selectedWallet.index}`));
+            setWallets(wallets.filter((w) => w.index !== selectedWallet.index));
+            setShowPopup(false);
+
+            toast.success("Wallet removed successfully.", {
+                icon: '🗑️',
+            });
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to remove wallet. Please try again.");
+        }
     };
 
     const handleVerifyPassword = async () => {
-  try {
-    const db = getDatabase();
+        try {
+            const db = getDatabase();
 
-    // ✅ Step 1: Get stored password hash
-    const passRef = ref(db, `users/${username}/password`);
-    const passSnap = await get(passRef);
-    const storedHash = passSnap.val();
-    const inputHash = SHA256(password).toString();
+            const passRef = ref(db, `users/${username}/password`);
+            const passSnap = await get(passRef);
+            const storedHash = passSnap.val();
+            const inputHash = SHA256(password).toString();
 
-    if (inputHash !== storedHash) {
-      return alert("Incorrect password");
-    }
+            if (inputHash !== storedHash) {
+                alert("Incorrect password");
+                return;
+            }
 
-    setRecoveryMnemonic(mnemonic);
-    setShowPasswordPrompt(false);
-    setShowRecoveryPhrase(true);
+            //Fetching
+            const userRef = ref(db, `users/${username}/mnemonic`);
+            const mnemonicSnap = await get(userRef);
+            const encryptedMnemonic = mnemonicSnap.val();
 
-  } catch (err) {
-    console.error("Error fetching or decoding seed:", err);
-    alert("Something went wrong while verifying.");
-  }
-};
+           //Decrypting
+            const bytes = CryptoJS.AES.decrypt(encryptedMnemonic, password);
+            const decryptedMnemonic = bytes.toString(CryptoJS.enc.Utf8);
+
+            if (!decryptedMnemonic) {
+                alert("Failed to decrypt mnemonic — maybe wrong password?");
+                return;
+            }
+
+            
+            setRecoveryMnemonic(decryptedMnemonic);
+            setShowPasswordPrompt(false);
+            setShowRecoveryPhrase(true);
+
+        } catch (err) {
+            console.error("Error verifying password:", err);
+            alert("Something went wrong during decryption.");
+        }
+    };
+
 
 
     return (
@@ -178,7 +208,7 @@ const ManageWallets = () => {
                                 onClick={() => {
                                     setShowRecoveryPhrase(false);
                                     setShowPopup(false);
-                                     navigate("/wallet", { state: { username,mnemonic } });
+                                    navigate("/wallet", { state: { username, mnemonic } });
                                 }}
                                 className="bg-purple-700 px-6 py-2 rounded-lg"
                             >

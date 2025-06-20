@@ -1,32 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from 'react';
+import { useLocation } from "react-router-dom";
 import { derivePath } from "ed25519-hd-key";
 import { Keypair, Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import nacl from "tweetnacl";
 import { getDatabase, ref, set, get } from "firebase/database";
-import { rtdb } from "../utils/firebaseConfig";
 import SettingsMenu from '../components/SettingsMenu';
 import { motion } from "framer-motion";
-import bs58 from "bs58";
 import * as bip39 from "bip39";
+
+
 const Wallet = () => {
     const location = useLocation();
-    const navigate = useNavigate();
 
     const username = location.state?.username;
     const mnemonic = location.state?.mnemonic;
-const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
-  const seedBase58 = bs58.encode(seed);
-   
-    const [publicKey, setPublicKey] = useState("");
+
+    const seed = useMemo(() => bip39.mnemonicToSeedSync(mnemonic), [mnemonic]);
+
+
+
     const [walletBalance, setWalletBalance] = useState("0.00");
     const [wallets, setWallets] = useState([{ name: null }]);
     const [selectedWalletIndex, setSelectedWalletIndex] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [newWalletName, setNewWalletName] = useState("");
     const [userNameLabel, setUserNameLabel] = useState("User");
+    const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 
-    const solanaAlchemy = "https://solana-mainnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
+    const solanaAlchemy = "https://solana-devnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
 
     const handleAddWallet = async () => {
         if (!newWalletName.trim()) return;
@@ -90,28 +91,27 @@ const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
     }, [username, seed]);
 
     useEffect(() => {
-      const fetchWalletBalance = async () => {
-    const selectedWallet = wallets[selectedWalletIndex];
-    if (!selectedWallet || !selectedWallet.publicKey) return;
+        const fetchWalletBalance = async () => {
+            const selectedWallet = wallets[selectedWalletIndex];
+            if (!selectedWallet || !selectedWallet.publicKey) return;
 
-    try {
-        const pubKey = selectedWallet.publicKey;
-        setPublicKey(pubKey);
-
-        const connection = new Connection(solanaAlchemy, "confirmed");
-        const balance = await connection.getBalance(new PublicKey(pubKey));
-        const sol = balance / LAMPORTS_PER_SOL;
-        const usd = (sol * 145).toFixed(2);
-        setWalletBalance(usd);
-    } catch (error) {
-        console.error("Error fetching wallet balance:", error);
-        setWalletBalance("0.00");
-    }
-};
-
+            try {
+                setIsBalanceLoading(true);
+                const connection = new Connection(solanaAlchemy, "confirmed");
+                const balance = await connection.getBalance(new PublicKey(selectedWallet.publicKey));
+                const sol = balance / LAMPORTS_PER_SOL;
+                const usd = (sol * 145)
+                setWalletBalance(usd);
+            } catch (error) {
+                console.error("Error fetching wallet balance:", error);
+                setWalletBalance("0.00");
+            } finally {
+                setIsBalanceLoading(false);
+            }
+        };
 
         fetchWalletBalance();
-    }, [selectedWalletIndex, wallets]);
+    }, [selectedWalletIndex, wallets.length]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-950 text-white px-4 sm:px-6 py-6">
@@ -122,9 +122,9 @@ const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
             <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-3 mb-6 sm:mb-8">
                 <div>
                     <p className="text-sm text-purple-300 font-mono">@{username?.toLowerCase()}</p>
-                    <h1 className="text-4xl sm:text-5xl font-bold text-white">{username}</h1>
+                    <h1 className="text-4xl sm:text-5xl font-bold text-white">Hey {username}✌️</h1>
                 </div>
-                <SettingsMenu  username={username} seedBase58={seedBase58} mnemonic={mnemonic}/>
+                <SettingsMenu username={username} mnemonic={mnemonic} />
             </div>
 
             <div className="grid grid-cols-12 gap-4 sm:gap-6">
@@ -136,11 +136,10 @@ const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
                                 <button
                                     key={index}
                                     onClick={() => setSelectedWalletIndex(index)}
-                                    className={`w-full px-4 py-2 rounded-lg text-left transition-all duration-200 font-semibold ${
-                                        selectedWalletIndex === index
-                                            ? "bg-purple-700 text-white shadow-md"
-                                            : "bg-purple-900 text-purple-300 hover:bg-purple-800"
-                                    }`}
+                                    className={`w-full px-4 py-2 rounded-lg text-left transition-all duration-200 font-semibold ${selectedWalletIndex === index
+                                        ? "bg-purple-700 text-white shadow-md"
+                                        : "bg-purple-900 text-purple-300 hover:bg-purple-800"
+                                        }`}
                                 >
                                     {wallet.name}
                                 </button>
@@ -156,13 +155,21 @@ const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
                     className="col-span-12 lg:col-span-6 order-1 lg:order-2"
                 >
                     <div className="text-center mb-6">
-                        <h2 className="text-4xl sm:text-5xl font-extrabold text-green-400">${walletBalance}</h2>
+                        {isBalanceLoading ? (
+                            <p className="text-gray-300 text-xl sm:text-2xl font-medium">Fetching balance...</p>
+                        ) : (
+                            <h2 className="text-4xl sm:text-5xl font-extrabold text-green-400">${walletBalance}</h2>
+                        )}
                         <p className="text-gray-400 mt-1">Wallet Balance (USD)</p>
                     </div>
 
+
                     <div className="bg-white/10 p-4 rounded-xl border border-white/10 shadow-md break-all mb-6">
                         <p className="text-sm text-gray-400">Public Key:</p>
-                        <p className="font-mono text-purple-200 text-xs sm:text-sm mt-1">{publicKey}</p>
+                        <p className="font-mono text-purple-200 text-xs sm:text-sm mt-1">
+                            {wallets[selectedWalletIndex]?.publicKey || "No public key available"}
+                        </p>
+
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -192,7 +199,7 @@ const seed = bip39.mnemonicToSeedSync(mnemonic).slice(0, 32);
                         </div>
                         <div className="text-sm">
                             <p className="text-gray-400">Solana</p>
-                            <p className="text-white text-lg font-medium">{walletBalance}</p>
+                            <p className="text-white text-lg font-medium">{walletBalance / 145}</p>
                         </div>
                     </div>
                 </div>
