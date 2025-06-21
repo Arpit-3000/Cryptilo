@@ -7,7 +7,9 @@ import { getDatabase, ref, set, get } from "firebase/database";
 import SettingsMenu from '../components/SettingsMenu';
 import { motion } from "framer-motion";
 import * as bip39 from "bip39";
-
+import bs58 from "bs58"
+import CryptoJS from "crypto-js";
+import toast from 'react-hot-toast';
 
 const Wallet = () => {
     const location = useLocation();
@@ -15,43 +17,66 @@ const Wallet = () => {
     const username = location.state?.username;
     const mnemonic = location.state?.mnemonic;
 
+
     const seed = useMemo(() => bip39.mnemonicToSeedSync(mnemonic), [mnemonic]);
 
 
 
+    const [enteredPassword, setEnteredPassword] = useState("");
     const [walletBalance, setWalletBalance] = useState("0.00");
     const [wallets, setWallets] = useState([{ name: null }]);
     const [selectedWalletIndex, setSelectedWalletIndex] = useState(0);
     const [showModal, setShowModal] = useState(false);
+    const [showWalletPopup, setShowWalletPopup] = useState(false);
     const [newWalletName, setNewWalletName] = useState("");
-    const [userNameLabel, setUserNameLabel] = useState("User");
     const [isBalanceLoading, setIsBalanceLoading] = useState(false);
 
     const solanaAlchemy = "https://solana-devnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
 
-    const handleAddWallet = async () => {
-        if (!newWalletName.trim()) return;
+    const verifyPasswordAndAddWallet = async () => {
+        if (!newWalletName.trim() || !enteredPassword) {
+            toast.error("⚠️ Please fill both the fields.");
+            return;
+        }
+
+        const db = getDatabase();
+        const passRef = ref(db, `users/${username}/password`);
+        const passSnap = await get(passRef);
+
+        if (!passSnap.exists()) {
+            toast.error("Password not found in database");
+            return;
+        }
+
+        const storedHash = passSnap.val();
+        const enteredHash = CryptoJS.SHA256(enteredPassword).toString();
+
+        if (enteredHash !== storedHash) {
+            toast.error("Incorrect Password")
+            return;
+        }
 
         const path = `m/44'/501'/${wallets.length}'/0'`;
         const derivedSeed = derivePath(path, seed.toString("hex")).key;
         const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
         const keypair = Keypair.fromSecretKey(secret);
         const newPubKey = keypair.publicKey.toBase58();
+        const privateKeyBase58 = bs58.encode(keypair.secretKey);
+        const encryptedPrivateKey = CryptoJS.AES.encrypt(privateKeyBase58, enteredPassword).toString();
 
-        const db = getDatabase();
-        const userRef = ref(db, `users/${username}/wallets/${wallets.length}`);
-
-        await set(userRef, {
-            name: newWalletName.trim(),
+        await set(ref(db, `users/${username}/wallets/${wallets.length}`), {
+            name: newWalletName,
             publicKey: newPubKey,
+            privateKey: encryptedPrivateKey,
             createdAt: new Date().toISOString(),
         });
 
-        setWallets([...wallets, { name: newWalletName.trim(), publicKey: newPubKey }]);
+        toast.success("\u{1FA99} New wallet created")
+        setWallets([...wallets, { name: newWalletName, publicKey: newPubKey }]);
         setSelectedWalletIndex(wallets.length);
-        setNewWalletName("");
-        setShowModal(false);
+        setShowWalletPopup(false);
     };
+
 
     useEffect(() => {
         const initWallet = async () => {
@@ -76,10 +101,13 @@ const Wallet = () => {
                 const secret = nacl.sign.keyPair.fromSeed(derivedSeed).secretKey;
                 const keypair = Keypair.fromSecretKey(secret);
                 const pubKey = keypair.publicKey.toBase58();
+                const privateKeyBase58 = bs58.encode(keypair.secretKey);
+                const encryptedPrivateKey = CryptoJS.AES.encrypt(privateKeyBase58, enteredPassword).toString();
 
                 await set(ref(db, `users/${username}/wallets/0`), {
                     name: username + "'s Wallet",
                     publicKey: pubKey,
+                    privateKey: encryptedPrivateKey,
                     createdAt: new Date().toISOString(),
                 });
 
@@ -185,7 +213,11 @@ const Wallet = () => {
 
                     <button
                         className="w-full bg-pink-600 hover:bg-pink-500 py-3 rounded-xl text-white font-semibold transition"
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            setNewWalletName("");
+                            setEnteredPassword("");
+                            setShowWalletPopup(true);
+                        }}
                     >
                         ➕ New Wallet
                     </button>
@@ -205,34 +237,45 @@ const Wallet = () => {
                 </div>
             </div>
 
-            {showModal && (
+            {showWalletPopup && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-zinc-900 text-white rounded-xl p-6 w-[90%] max-w-md shadow-2xl space-y-4 border border-purple-700">
-                        <h2 className="text-lg font-bold text-purple-400">Name your new wallet</h2>
+                        <h2 className="text-lg font-bold text-purple-400">Create New Wallet</h2>
+
                         <input
                             type="text"
                             value={newWalletName}
                             onChange={(e) => setNewWalletName(e.target.value)}
-                            className="w-full px-4 py-2 rounded-lg bg-purple-950 text-white placeholder-gray-400 border border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="e.g. Trading Wallet"
+                            placeholder="Enter wallet name"
+                            className="w-full px-4 py-2 rounded-lg bg-purple-950 text-white placeholder-gray-400 border border-purple-600 focus:outline-none"
                         />
+
+                        <input
+                            type="password"
+                            value={enteredPassword}
+                            onChange={(e) => setEnteredPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            className="w-full px-4 py-2 rounded-lg bg-purple-950 text-white placeholder-gray-400 border border-purple-600 focus:outline-none"
+                        />
+
                         <div className="flex justify-end gap-3 pt-2">
                             <button
-                                onClick={() => setShowModal(false)}
+                                onClick={() => setShowWalletPopup(false)}
                                 className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded-lg text-sm"
                             >
                                 Cancel
                             </button>
                             <button
-                                onClick={handleAddWallet}
-                                className="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded-lg text-sm font-medium"
+                                onClick={verifyPasswordAndAddWallet}
+                                className="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium"
                             >
-                                Add Wallet
+                                Create Wallet
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

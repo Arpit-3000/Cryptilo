@@ -18,6 +18,9 @@ const ManageWallets = () => {
     const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
     const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
     const [recoveryMnemonic, setRecoveryMnemonic] = useState('');
+    const [showPrivateKeyPrompt, setShowPrivateKeyPrompt] = useState(false);
+    const [decryptedPrivateKey, setDecryptedPrivateKey] = useState('');
+
 
     useEffect(() => {
         const fetchWallets = async () => {
@@ -86,7 +89,7 @@ const ManageWallets = () => {
             const mnemonicSnap = await get(userRef);
             const encryptedMnemonic = mnemonicSnap.val();
 
-           //Decrypting
+            //Decrypting
             const bytes = CryptoJS.AES.decrypt(encryptedMnemonic, password);
             const decryptedMnemonic = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -95,7 +98,7 @@ const ManageWallets = () => {
                 return;
             }
 
-            
+
             setRecoveryMnemonic(decryptedMnemonic);
             setShowPasswordPrompt(false);
             setShowRecoveryPhrase(true);
@@ -105,6 +108,41 @@ const ManageWallets = () => {
             alert("Something went wrong during decryption.");
         }
     };
+
+    const handleVerifyPrivateKeyPassword = async () => {
+        try {
+            const db = getDatabase();
+
+            const passRef = ref(db, `users/${username}/password`);
+            const passSnap = await get(passRef);
+            const storedHash = passSnap.val();
+            const inputHash = SHA256(password).toString();
+
+            if (inputHash !== storedHash) {
+                toast.error("Incorrect password");
+                return;
+            }
+
+            const privateKeyRef = ref(db, `users/${username}/wallets/${selectedWallet.index}/privateKey`);
+            const privateKeySnap = await get(privateKeyRef);
+            const encryptedPrivateKey = privateKeySnap.val();
+
+            const bytes = CryptoJS.AES.decrypt(encryptedPrivateKey, password);
+            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+
+            if (!decrypted) {
+                toast.error("Failed to decrypt private key — maybe wrong password?");
+                return;
+            }
+
+            setDecryptedPrivateKey(decrypted);
+            setShowPrivateKeyPrompt(false);
+        } catch (err) {
+            console.error("Error verifying private key password:", err);
+            toast.error("⚠️ Something went wrong during decryption.");
+        }
+    };
+
 
 
 
@@ -145,7 +183,7 @@ const ManageWallets = () => {
                         </button>
                         <button
                             className="w-full bg-purple-700 hover:bg-purple-800 py-2 rounded"
-                            onClick={() => alert('Private Key: (secure this!)')}
+                            onClick={() => setShowPrivateKeyPrompt(true)}
                         >
                             Show Private Key
                         </button>
@@ -188,6 +226,30 @@ const ManageWallets = () => {
                 </div>
             )}
 
+            {showPrivateKeyPrompt && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+                    <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm border border-purple-700">
+                        <h2 className="text-lg font-bold mb-4">Enter your password</h2>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Password"
+                            className="w-full p-2 rounded bg-purple-950 text-white border border-purple-600"
+                        />
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button onClick={() => setShowPrivateKeyPrompt(false)} className="bg-gray-600 px-4 py-2 rounded">
+                                Cancel
+                            </button>
+                            <button onClick={handleVerifyPrivateKeyPassword} className="bg-purple-700 px-4 py-2 rounded">
+                                Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
             {showRecoveryPhrase && (
                 <div className="fixed inset-0 bg-black/90 text-white z-50 flex items-center justify-center px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl max-w-lg w-full border border-purple-700 space-y-4">
@@ -208,7 +270,7 @@ const ManageWallets = () => {
                                 onClick={() => {
                                     setShowRecoveryPhrase(false);
                                     setShowPopup(false);
-                                    navigate("/wallet", { state: { username, mnemonic } });
+                                    setPassword("");
                                 }}
                                 className="bg-purple-700 px-6 py-2 rounded-lg"
                             >
@@ -218,6 +280,33 @@ const ManageWallets = () => {
                     </div>
                 </div>
             )}
+
+            {decryptedPrivateKey && (
+                <div className="fixed inset-0 bg-black/90 text-white z-50 flex items-center justify-center px-4">
+                    <div className="bg-zinc-900 p-6 rounded-xl max-w-lg w-full border border-purple-700 space-y-4">
+                        <h2 className="text-2xl font-bold text-purple-400">Private Key</h2>
+                        <p className="text-sm text-red-400 leading-relaxed">
+                            This is your private key. Do not share it with anyone. It gives full access to your wallet.
+                        </p>
+                        <div className="bg-purple-950 p-4 rounded-lg text-purple-300 text-xs sm:text-sm font-mono break-all border border-purple-600">
+                            {decryptedPrivateKey}
+                        </div>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={() => {
+                                    setDecryptedPrivateKey('');
+                                    setShowPopup(false);
+                                    setPassword("");
+                                }}
+                                className="bg-purple-700 px-6 py-2 rounded-lg"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };
