@@ -151,7 +151,7 @@ const ManageWallets = () => {
             const inputHash = SHA256(password).toString();
 
             if (inputHash !== storedHash) {
-                alert("Incorrect password");
+                toast.error("Incorrect password");
                 return;
             }
 
@@ -165,7 +165,7 @@ const ManageWallets = () => {
             const decryptedMnemonic = bytes.toString(CryptoJS.enc.Utf8);
 
             if (!decryptedMnemonic) {
-                alert("Failed to decrypt mnemonic — maybe wrong password?");
+                toast.error("Failed to decrypt mnemonic — maybe wrong password?");
                 return;
             }
 
@@ -176,7 +176,7 @@ const ManageWallets = () => {
 
         } catch (err) {
             console.error("Error verifying password:", err);
-            alert("Something went wrong during decryption.");
+            toast.error("Something went wrong during decryption.");
         }
     };
 
@@ -291,7 +291,7 @@ const ManageWallets = () => {
             {showNewNamePrompt && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm border border-purple-700">
-                        <h2 className="text-lg font-bold mb-4">Enter your New Name</h2>
+                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your New Name</h2>
                         <input
                             type="text"
                             value={newName}
@@ -319,7 +319,7 @@ const ManageWallets = () => {
             {showPasswordPromptRemove && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm space-y-4 border border-purple-700">
-                        <h2 className="text-lg font-bold text-purple-400">Enter your password to continue</h2>
+                        <h2 className="text-lg font-bold text-purple-400">Enter your registerd password</h2>
                         <input
                             type="password"
                             value={password}
@@ -393,7 +393,7 @@ const ManageWallets = () => {
             {showPasswordPrompt && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm border border-purple-700">
-                        <h2 className="text-lg font-bold mb-4">Enter your password</h2>
+                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your registerd password</h2>
                         <input
                             type="password"
                             value={password}
@@ -420,7 +420,7 @@ const ManageWallets = () => {
             {showPrivateKeyPrompt && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm border border-purple-700">
-                        <h2 className="text-lg font-bold mb-4">Enter your password</h2>
+                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your registerd password</h2>
                         <input
                             type="password"
                             value={password}

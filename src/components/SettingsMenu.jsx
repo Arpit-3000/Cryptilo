@@ -58,6 +58,7 @@ const SettingsMenu = ({ username, mnemonic }) => {
       await remove(ref(db, `users/${username}`));
       toast.success("Wallet deleted successfully", { icon: "🗑️" });
       setShowConfirmationPrompt(false);
+      setPassword("");
       navigate("/");
     } catch (err) {
       console.error(err);
@@ -100,7 +101,7 @@ border border-purple-700
               onClick={goToManageWallets}
               className="w-full text-left px-4 py-2 hover:bg-purple-700 transition"
             >
-              Manage My Accounts
+              Manage Wallets
             </button>
             <button
               onClick={() => alert("Settings Coming Soon")}
@@ -147,13 +148,15 @@ border border-purple-700
             />
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setShowPasswordPrompt(false)}
+                onClick={() => {setShowPasswordPrompt(false);
+                 setPassword("");}}
                 className="bg-gray-600 px-4 py-2 rounded-lg"
               >
                 Cancel
               </button>
               <button
-                onClick={verifyPassword}
+                onClick={()=>{verifyPassword();
+                 setPassword("")}}
                 className="bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded-lg"
               >
                 Verify
@@ -173,13 +176,17 @@ border border-purple-700
             </p>
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setShowConfirmationPrompt(false)}
+                onClick={() => {setShowConfirmationPrompt(false);
+                setPassword("");
+                }}
                 className="bg-gray-600 px-4 py-2 rounded-lg"
               >
                 Cancel
               </button>
               <button
-                onClick={handleDeleteAccount}
+                onClick={()=>{handleDeleteAccount;
+                  setPassword("");
+                  }}
                 className="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg"
               >
                 Yes, Delete
