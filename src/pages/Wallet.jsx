@@ -16,6 +16,7 @@ const Wallet = () => {
 
     const username = location.state?.username;
     const mnemonic = location.state?.mnemonic;
+    const password = location.state?.password;
 
 
     const seed = useMemo(() => bip39.mnemonicToSeedSync(mnemonic), [mnemonic]);
@@ -102,7 +103,8 @@ const Wallet = () => {
                 const keypair = Keypair.fromSecretKey(secret);
                 const pubKey = keypair.publicKey.toBase58();
                 const privateKeyBase58 = bs58.encode(keypair.secretKey);
-                const encryptedPrivateKey = CryptoJS.AES.encrypt(privateKeyBase58, enteredPassword).toString();
+                const encryptedPrivateKey = CryptoJS.AES.encrypt(privateKeyBase58, password).toString();
+                localStorage.removeItem('password');
 
                 await set(ref(db, `users/${username}/wallets/0`), {
                     name: username + "'s Wallet",

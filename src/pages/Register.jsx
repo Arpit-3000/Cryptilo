@@ -53,7 +53,7 @@ const Register = () => {
     mnemonic: encryptedMnemonic,
     createdAt: new Date().toISOString(),
   });
-  navigate("/wallet", { state: { username,mnemonic } });
+  navigate("/wallet", { state: { username,mnemonic,password } });
 };
 
   return (
