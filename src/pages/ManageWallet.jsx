@@ -319,7 +319,7 @@ const ManageWallets = () => {
             {showPasswordPromptRemove && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm space-y-4 border border-purple-700">
-                        <h2 className="text-lg font-bold text-purple-400">Enter your registerd password</h2>
+                        <h2 className="text-lg font-bold text-purple-400">Enter your registered password</h2>
                         <input
                             type="password"
                             value={password}
@@ -393,7 +393,7 @@ const ManageWallets = () => {
             {showPasswordPrompt && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm border border-purple-700">
-                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your registerd password</h2>
+                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your registered password</h2>
                         <input
                             type="password"
                             value={password}
@@ -420,7 +420,7 @@ const ManageWallets = () => {
             {showPrivateKeyPrompt && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
                     <div className="bg-zinc-900 p-6 rounded-xl w-full max-w-sm border border-purple-700">
-                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your registerd password</h2>
+                        <h2 className="text-lg font-bold text-purple-400 mb-4">Enter your registered password</h2>
                         <input
                             type="password"
                             value={password}

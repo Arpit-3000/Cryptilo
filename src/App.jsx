@@ -5,6 +5,7 @@ import Welcome from './pages/Welcome'
 import Register from './pages/Register';
 import Wallet from './pages/Wallet';
 import ManageWallets from './pages/ManageWallet';
+import SendTransaction from "./pages/SendTransaction";
 
 function App() {
   
@@ -13,13 +14,13 @@ function App() {
     <>
 
        <Toaster
-        position="top-right"
+        position="bottom-center"
         toastOptions={{
           style: {
             background: '#1e1b4b', 
             color: '#fff',
             border: '1px solid #7c3aed',
-            fontFamily: 'monospace',
+            fontFamily: 'serif',
           },
         }}
       />
@@ -28,6 +29,7 @@ function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/register" element={<Register />} />
         <Route path="/wallet" element={<Wallet/>}/>
+        <Route path="/send-transaction" element={<SendTransaction/>}/>
         <Route path="/manage-wallets"element={<ManageWallets/>}/>
       </Routes>
     </Router>

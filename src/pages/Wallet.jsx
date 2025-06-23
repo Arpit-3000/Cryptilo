@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation } from "react-router-dom";
+import { href, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { derivePath } from "ed25519-hd-key";
-import { Keypair, Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import nacl from "tweetnacl";
 import { getDatabase, ref, set, get } from "firebase/database";
 import SettingsMenu from '../components/SettingsMenu';
-import { motion } from "framer-motion";
 import * as bip39 from "bip39";
 import bs58 from "bs58"
 import CryptoJS from "crypto-js";
 import toast from 'react-hot-toast';
+import { QRCodeCanvas } from "qrcode.react";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 const Wallet = () => {
     const location = useLocation();
@@ -27,10 +29,16 @@ const Wallet = () => {
     const [walletBalance, setWalletBalance] = useState("0.00");
     const [wallets, setWallets] = useState([{ name: null }]);
     const [selectedWalletIndex, setSelectedWalletIndex] = useState(0);
-    const [showModal, setShowModal] = useState(false);
     const [showWalletPopup, setShowWalletPopup] = useState(false);
     const [newWalletName, setNewWalletName] = useState("");
     const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+    const [showReceiveModal, setShowReceiveModal] = useState(false);
+
+    //SEND TRANSACTION MODAL
+    const [showSendModal, setShowSendModal] = useState(false);
+    const [recipientAddress, setRecipientAddress] = useState("");
+    const [sendAmount, setSendAmount] = useState("");
+    const [sendingSol, setSendingSol] = useState(false);
 
     const solanaAlchemy = "https://solana-devnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
 
@@ -194,19 +202,33 @@ const Wallet = () => {
                     </div>
 
 
-                    <div className="bg-white/10 p-4 rounded-xl border border-white/10 shadow-md break-all mb-6">
+                    <div className="bg-white/10 p-4 rounded-xl border border-white/10 shadow-md mb-6">
                         <p className="text-sm text-gray-400">Public Key:</p>
-                        <p className="font-mono text-purple-200 text-xs sm:text-sm mt-1">
-                            {wallets[selectedWalletIndex]?.publicKey || "No public key available"}
-                        </p>
+                        <div className="flex items-center justify-between mt-1 gap-2 break-all">
+                            <motion.button
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => {
+                                    navigator.clipboard.writeText(wallets[selectedWalletIndex]?.publicKey || "");
+                                    toast.success("📋 Public key copied!");
+                                }}
+                                className="text-purple-200 text-xs sm:text-sm">
+                                {wallets[selectedWalletIndex]?.publicKey || "No public key available"}
 
+                            </motion.button>
+                        </div>
                     </div>
+
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                         {["Receive", "Send", "Swap", "Buy"].map((action, i) => (
                             <button
                                 key={i}
                                 className="bg-purple-700 hover:bg-purple-600 py-3 rounded-xl text-sm font-semibold transition"
+                                onClick={() => {
+                                    if (action === "Receive") setShowReceiveModal(true);
+                                    if (action === "Buy") window.open("https://www.binance.com/en/buy-sell-crypto", "_blank");
+                                    if (action === "Send") setShowSendModal(true);
+                                }}
                             >
                                 {action}
                             </button>
@@ -239,6 +261,8 @@ const Wallet = () => {
                 </div>
             </div>
 
+
+            {/*Create Wallet Popup*/}
             {showWalletPopup && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-zinc-900 text-white rounded-xl p-6 w-[90%] max-w-md shadow-2xl space-y-4 border border-purple-700">
@@ -256,7 +280,7 @@ const Wallet = () => {
                             type="password"
                             value={enteredPassword}
                             onChange={(e) => setEnteredPassword(e.target.value)}
-                            placeholder="Enter your password"
+                            placeholder="Enter your registered password"
                             className="w-full px-4 py-2 rounded-lg bg-purple-950 text-white placeholder-gray-400 border border-purple-600 focus:outline-none"
                         />
 
@@ -278,8 +302,231 @@ const Wallet = () => {
                 </div>
             )}
 
+            {/*Receive Transaction*/}
+            <AnimatePresence>
+                {showReceiveModal && (
+                    <motion.div
+                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="bg-zinc-900 text-white rounded-2xl p-6 w-[90%] max-w-md shadow-2xl border border-purple-700 flex flex-col items-center space-y-5 h-[5vh] sm:h-auto"
+                            initial={{ y: 40, scale: 0.95, opacity: 0 }}
+                            animate={{ y: 0, scale: 1, opacity: 1 }}
+                            exit={{ y: 40, scale: 0.95, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
+                            <h2 className="text-xl font-bold text-purple-300">Receive Address</h2>
+
+                            <div className="bg-white p-3 rounded-xl shadow-md">
+                                <QRCodeCanvas
+                                    value={wallets[selectedWalletIndex]?.publicKey || ""}
+                                    size={140}
+                                    bgColor="#ffffff"
+                                    fgColor="#000000"
+                                    level="H"
+                                    includeMargin={true}
+                                />
+                            </div>
+
+                            <div className="w-full text-center space-y-1">
+                                <p className="text-sm text-gray-400">Your Solana Address</p>
+                                <div className="bg-purple-950 px-3 py-2 rounded-md border border-purple-600 text-sm break-all  text-purple-200">
+                                    {wallets[selectedWalletIndex]?.publicKey || "Unavailable"}
+                                </div>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(wallets[selectedWalletIndex]?.publicKey || "");
+                                        toast.success("Copied to clipboard");
+                                    }}
+                                    className="mt-2 w-full flex items-center justify-center gap-1 text-sm text-white bg-purple-700 hover:bg-purple-800 px-4 py-2 rounded-md font-large transition-all"
+                                >
+                                    <span>📋</span> Copy
+                                </motion.button>
+                            </div>
+
+                            <p className="text-xs text-gray-500 mt-1 text-center">
+                                This address can only be used to receive Solana tokens.
+                            </p>
+
+                            <motion.button
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => setShowReceiveModal(false)}
+                                className="w-full mt-2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-sm transition-all"
+                            >
+                                Close
+                            </motion.button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/*Send Transaction*/}
+            <AnimatePresence>
+                {showSendModal && (
+                    <motion.div
+                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="bg-zinc-900 text-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-purple-700 space-y-5"
+                            initial={{ y: 40, scale: 0.95, opacity: 0 }}
+                            animate={{ y: 0, scale: 1, opacity: 1 }}
+                            exit={{ y: 40, scale: 0.95, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                        >
+                            <h2 className="text-xl font-bold text-purple-300 text-center">Send SOL</h2>
+
+                            <input
+                                type="text"
+                                placeholder="Recipient's Solana address"
+                                value={recipientAddress}
+                                onChange={(e) => setRecipientAddress(e.target.value)}
+                                className="w-full px-4 py-2 bg-purple-950 text-white placeholder-gray-400 border border-purple-600 rounded-lg focus:outline-none text-sm"
+                            />
+
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Amount in SOL"
+                                    value={sendAmount}
+                                    onChange={(e) => setSendAmount(e.target.value)}
+                                    className="w-full py-2 px-4 pr-20 bg-purple-950 text-white placeholder-gray-400 border border-purple-600 rounded-lg focus:outline-none text-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setSendAmount((walletBalance / 145).toFixed(10))}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-purple-700 hover:bg-purple-600 text-xs font-medium px-2 py-1 -mt-3 rounded-md"
+                                >
+                                    Max
+                                </button>
+                                <p className="text-purple-400 text-xs text-right mt-2">
+                                    Available: {(walletBalance / 145).toFixed(10)} SOL
+                                </p>
+                            </div>
+
+                            <input
+                                type="password"
+                                placeholder="Enter your password"
+                                value={enteredPassword}
+                                onChange={(e) => setEnteredPassword(e.target.value)}
+                                className="w-full px-4 py-2 bg-purple-950 text-white placeholder-gray-400 border border-purple-600 rounded-lg focus:outline-none text-sm"
+                            />
+
+                            {parseFloat(sendAmount || "0") > walletBalance / 145 && (
+                                <p className="text-red-500 text-xs mt-1 font-medium">⚠️ Insufficient balance</p>
+                            )}
+
+                            <motion.button
+                                whileTap={{ scale: 0.97 }}
+                                disabled={
+                                    sendingSol ||
+                                    !recipientAddress ||
+                                    !sendAmount ||
+                                    !enteredPassword ||
+                                    parseFloat(sendAmount) > walletBalance / 145
+                                }
+                                onClick={async () => {
+                                    try {
+                                        setSendingSol(true);
+
+                                        const db = getDatabase();
+                                        const passwordSnap = await get(ref(db, `users/${username}/password`));
+                                        if (!passwordSnap.exists()) {
+                                            toast.error("Password not found.");
+                                            return;
+                                        }
+
+                                        const hashedPassword = passwordSnap.val();
+                                        const enteredHash = CryptoJS.SHA256(enteredPassword).toString();
+                                        if (enteredHash !== hashedPassword) {
+                                            toast.error("❌ Incorrect Password");
+                                            return;
+                                        }
+
+                                        const walletSnap = await get(ref(db, `users/${username}/wallets/${selectedWalletIndex}`));
+                                        if (!walletSnap.exists()) throw new Error("Wallet not found");
+
+                                        const { privateKey } = walletSnap.val();
+                                        const decrypted = CryptoJS.AES.decrypt(privateKey, enteredPassword).toString(CryptoJS.enc.Utf8);
+                                        const keypair = Keypair.fromSecretKey(bs58.decode(decrypted));
+
+                                        const connection = new Connection(solanaAlchemy, "confirmed");
+
+
+                                        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+
+                                        const tx = new Transaction({
+                                            feePayer: keypair.publicKey,
+                                            recentBlockhash: blockhash,
+                                        }).add(
+                                            SystemProgram.transfer({
+                                                fromPubkey: keypair.publicKey,
+                                                toPubkey: new PublicKey(recipientAddress),
+                                                lamports: parseFloat(sendAmount) * LAMPORTS_PER_SOL,
+                                            })
+                                        );
+
+                                        tx.sign(keypair);
+                                        const sig = await connection.sendRawTransaction(tx.serialize(), {
+                                            skipPreflight: true,
+                                        });
+                                        toast.success(`✅ Transaction submitted: ${sig}`);
+
+
+                                        connection.confirmTransaction(sig, "confirmed").then(() => {
+                                            toast.success(`✅ Transaction Successfull! Sign: ${sig}`);
+                                        }).catch(() => {
+
+                                        });
+
+
+
+                                        setShowSendModal(false);
+                                        setRecipientAddress("");
+                                        setSendAmount("");
+                                        setEnteredPassword("");
+                                    } catch (err) {
+                                        console.error(err);
+                                        toast.error("❌ Transaction failed");
+                                    } finally {
+                                        setSendingSol(false);
+                                    }
+                                }}
+                                className={`w-full py-2 rounded-lg font-semibold transition ${sendingSol ? "bg-gray-600" : "bg-purple-700 hover:bg-purple-600"}`}
+                            >
+                                {sendingSol ? "Sending..." : "Confirm Transaction"}
+                            </motion.button>
+
+                            <motion.button
+                                whileTap={{ scale: 0.97 }}
+                                onClick={() => {
+                                    setShowSendModal(false);
+                                    setRecipientAddress("");
+                                    setSendAmount("");
+                                    setEnteredPassword("");
+                                }}
+                                className="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-sm transition-all"
+                            >
+                                Cancel
+                            </motion.button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+
+
         </div>
     );
 };
 
 export default Wallet;
+
+
+//FneFnjCRKsktygxD5qmequWRxeHcyZw6nitY3Fv6o88w - 5 sols
