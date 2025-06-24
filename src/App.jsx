@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Wallet from './pages/Wallet';
 import ManageWallets from './pages/ManageWallet';
 import SendTransaction from "./pages/SendTransaction";
+import SolanaDetails from "./pages/SolanaDetails";
 
 function App() {
   
@@ -31,6 +32,7 @@ function App() {
         <Route path="/wallet" element={<Wallet/>}/>
         <Route path="/send-transaction" element={<SendTransaction/>}/>
         <Route path="/manage-wallets"element={<ManageWallets/>}/>
+        <Route path="solana-details" element={<SolanaDetails/>}/>
       </Routes>
     </Router>
     </>

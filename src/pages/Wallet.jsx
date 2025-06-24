@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { href, Navigate, useLocation, useNavigate } from "react-router-dom";
+import SolanaLogo from "../assets/SolanaLogo.png";
 import { derivePath } from "ed25519-hd-key";
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import nacl from "tweetnacl";
@@ -22,6 +23,7 @@ const Wallet = () => {
 
 
     const seed = useMemo(() => bip39.mnemonicToSeedSync(mnemonic), [mnemonic]);
+    const navigate = useNavigate();
 
 
 
@@ -253,9 +255,17 @@ const Wallet = () => {
                             <button className="text-purple-400 border-b-2 border-purple-400">Tokens</button>
                             <button className="text-gray-400 hover:text-white">Collectibles</button>
                         </div>
-                        <div className="text-sm">
-                            <p className="text-gray-400">Solana</p>
-                            <p className="text-white text-lg font-medium">{walletBalance / 145}</p>
+                        <div className="text-m flex items-center space-x-2">
+                            <img src={SolanaLogo} alt="Solana" className="w-6 h-6" />
+                            <button className="text-gray-400 font-medium text-m"
+                                onClick={() => {
+                                    localStorage.setItem("username", username);
+                                    localStorage.setItem("selectedWalletIndex", selectedWalletIndex);
+                                    navigate("/solana-details", {
+                                        state: { username, selectedWalletIndex }
+                                    });
+                                }}>Solana</button>
+                            <p className="text-white text-sm font-medium">{walletBalance / 145}</p>
                         </div>
                     </div>
                 </div>
