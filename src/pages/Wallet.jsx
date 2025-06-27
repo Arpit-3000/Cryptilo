@@ -12,6 +12,7 @@ import CryptoJS from "crypto-js";
 import toast from 'react-hot-toast';
 import { QRCodeCanvas } from "qrcode.react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNetwork } from "../context/NetworkContext";
 
 
 const Wallet = () => {
@@ -42,7 +43,9 @@ const Wallet = () => {
     const [sendAmount, setSendAmount] = useState("");
     const [sendingSol, setSendingSol] = useState(false);
 
-    const solanaAlchemy = "https://solana-devnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
+    //Developer Settings
+    const { network, solanaAlchemy } = useNetwork();
+
 
     const verifyPasswordAndAddWallet = async () => {
         if (!newWalletName.trim() || !enteredPassword) {
@@ -141,7 +144,7 @@ const Wallet = () => {
                 const balance = await connection.getBalance(new PublicKey(selectedWallet.publicKey));
                 const sol = balance / LAMPORTS_PER_SOL;
                 const usd = (sol * 145)
-                setWalletBalance(usd);
+                setWalletBalance(usd.toFixed(6));
             } catch (error) {
                 console.error("Error fetching wallet balance:", error);
                 setWalletBalance("0.00");
@@ -155,9 +158,18 @@ const Wallet = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-950 text-white px-4 sm:px-6 py-6">
-            <div className="bg-yellow-400 text-black font-medium text-center py-2 rounded-lg mb-6 sm:mb-8">
-                You are currently in Testnet Mode
-            </div>
+            {network === "devnet" && (
+                <div className="bg-yellow-400 text-black font-medium text-center py-2 rounded-lg mb-6 sm:mb-8">
+                    You are currently in Testnet Mode
+                </div>
+            )}
+            {network === "mainnet" && (
+                <div className="bg-green-400 text-black font-medium text-center py-2 rounded-lg mb-6 sm:mb-8">
+                    You are currently in Mainnet Mode
+                </div>
+            )}
+
+
 
             <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-3 mb-6 sm:mb-8">
                 <div>
@@ -213,7 +225,7 @@ const Wallet = () => {
                                     navigator.clipboard.writeText(wallets[selectedWalletIndex]?.publicKey || "");
                                     toast.success("📋 Public key copied!");
                                 }}
-                                className="text-purple-200 text-xs sm:text-sm">
+                                className="text-purple-200  text-xs sm:text-sm">
                                 {wallets[selectedWalletIndex]?.publicKey || "No public key available"}
 
                             </motion.button>
@@ -316,19 +328,19 @@ const Wallet = () => {
             <AnimatePresence>
                 {showReceiveModal && (
                     <motion.div
-                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+                        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-2 sm:px-4"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
                         <motion.div
-                            className="bg-zinc-900 text-white rounded-2xl p-6 w-[90%] max-w-md shadow-2xl border border-purple-700 flex flex-col items-center space-y-5 h-[5vh] sm:h-auto"
+                            className="bg-zinc-900 text-white rounded-2xl p-4 sm:p-6 w-full max-w-md shadow-2xl border border-purple-700 flex flex-col items-center space-y-5 max-h-[90vh] overflow-y-auto"
                             initial={{ y: 40, scale: 0.95, opacity: 0 }}
                             animate={{ y: 0, scale: 1, opacity: 1 }}
                             exit={{ y: 40, scale: 0.95, opacity: 0 }}
                             transition={{ duration: 0.3, ease: "easeOut" }}
                         >
-                            <h2 className="text-xl font-bold text-purple-300">Receive Address</h2>
+                            <h2 className="text-xl font-bold text-purple-300 text-center">Receive Address</h2>
 
                             <div className="bg-white p-3 rounded-xl shadow-md">
                                 <QRCodeCanvas
@@ -343,7 +355,7 @@ const Wallet = () => {
 
                             <div className="w-full text-center space-y-1">
                                 <p className="text-sm text-gray-400">Your Solana Address</p>
-                                <div className="bg-purple-950 px-3 py-2 rounded-md border border-purple-600 text-sm break-all  text-purple-200">
+                                <div className="bg-purple-950 px-3 py-2 rounded-md border border-purple-600 text-sm break-all text-purple-200">
                                     {wallets[selectedWalletIndex]?.publicKey || "Unavailable"}
                                 </div>
                                 <motion.button
@@ -352,7 +364,7 @@ const Wallet = () => {
                                         navigator.clipboard.writeText(wallets[selectedWalletIndex]?.publicKey || "");
                                         toast.success("Copied to clipboard");
                                     }}
-                                    className="mt-2 w-full flex items-center justify-center gap-1 text-sm text-white bg-purple-700 hover:bg-purple-800 px-4 py-2 rounded-md font-large transition-all"
+                                    className="mt-2 w-full flex items-center justify-center gap-1 text-sm text-white bg-purple-700 hover:bg-purple-800 px-4 py-2 rounded-md font-medium transition-all"
                                 >
                                     <span>📋</span> Copy
                                 </motion.button>

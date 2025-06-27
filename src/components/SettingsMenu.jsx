@@ -4,14 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { getDatabase, ref, get, remove } from "firebase/database";
 import SHA256 from "crypto-js/sha256";
 import toast from "react-hot-toast";
+import { useNetwork } from "../context/NetworkContext";
 
 const SettingsMenu = ({ username, mnemonic }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState("");
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);
+  const [showDevMenu, setShowDevMenu] = useState(false);
   const menuRef = useRef();
   const navigate = useNavigate();
+  const { network, setNetwork } = useNetwork();
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -82,20 +85,21 @@ const SettingsMenu = ({ username, mnemonic }) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-           className="
-absolute 
-right-2 sm:right-0
-left-2 sm:left-auto
-mt-2
-w-[calc(100vw-1rem)] sm:w-48
-max-w-xs
- bg-zinc-900 
- text-white 
-rounded-lg 
-shadow-lg 
-z-50 
-border border-purple-700
-"
+            className={`
+        absolute 
+        right-2 sm:right-0
+        left-2 sm:left-auto
+        mt-2
+        w-[calc(100vw-1rem)] sm:w-48
+        max-w-xs
+        bg-zinc-900 
+        text-white 
+        rounded-lg 
+        shadow-lg 
+        z-40 
+        border border-purple-700
+        ${showDevMenu ? "backdrop-blur-sm opacity-50 pointer-events-none" : ""}
+      `}
           >
             <button
               onClick={goToManageWallets}
@@ -110,7 +114,7 @@ border border-purple-700
               Preferences
             </button>
             <button
-              onClick={() => alert("Settings Coming Soon")}
+              onClick={() => setShowDevMenu(!showDevMenu)}
               className="w-full text-left px-4 py-2 hover:bg-purple-700 transition"
             >
               Developer Settings
@@ -148,15 +152,19 @@ border border-purple-700
             />
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => {setShowPasswordPrompt(false);
-                 setPassword("");}}
+                onClick={() => {
+                  setShowPasswordPrompt(false);
+                  setPassword("");
+                }}
                 className="bg-gray-600 px-4 py-2 rounded-lg"
               >
                 Cancel
               </button>
               <button
-                onClick={()=>{verifyPassword();
-                 setPassword("")}}
+                onClick={() => {
+                  verifyPassword();
+                  setPassword("")
+                }}
                 className="bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded-lg"
               >
                 Verify
@@ -176,17 +184,19 @@ border border-purple-700
             </p>
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => {setShowConfirmationPrompt(false);
-                setPassword("");
+                onClick={() => {
+                  setShowConfirmationPrompt(false);
+                  setPassword("");
                 }}
                 className="bg-gray-600 px-4 py-2 rounded-lg"
               >
                 Cancel
               </button>
               <button
-                onClick={()=>{handleDeleteAccount;
+                onClick={() => {
+                  handleDeleteAccount;
                   setPassword("");
-                  }}
+                }}
                 className="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg"
               >
                 Yes, Delete
@@ -194,6 +204,68 @@ border border-purple-700
             </div>
           </div>
         </div>
+      )}
+
+      {/*Developer Settings Menu*/}
+      {showDevMenu && (
+      <motion.div
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, y: 10 }}
+  className="
+    absolute z-50 
+    left-2 right-2 sm:right-2 sm:left-auto
+    bg-zinc-800 
+    border border-purple-600 
+    text-white 
+    rounded-lg 
+    shadow-md 
+    w-[90vw] sm:w-64 
+    max-w-xs px-4 py-3
+  "
+>
+
+          <h3 className="text-sm text-purple-300 font-semibold mb-2">Select Network</h3>
+          <div className="flex flex-col gap-3">
+            {/* Devnet Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Devnet Mode</p>
+                <p className="text-xs text-gray-400">For testing transactions</p>
+              </div>
+              <div
+                onClick={() => {setNetwork("devnet");setShowDevMenu(false);setIsOpen(false)}}
+                className={`w-11 h-6 flex items-center bg-gray-600 rounded-full p-1 cursor-pointer transition duration-300 ${network === "devnet" ? "bg-purple-600" : "bg-gray-700"}`}
+              >
+                <motion.div
+                  layout
+                  className="w-4 h-4 bg-white rounded-full shadow-md"
+                  animate={{ x: network === "devnet" ? 20 : 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                />
+              </div>
+            </div>
+
+            {/* Mainnet Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Mainnet Mode</p>
+                <p className="text-xs text-gray-400">Live network</p>
+              </div>
+              <div
+                onClick={() =>{setNetwork("mainnet");setShowDevMenu(false);setIsOpen(false)}}
+                className={`w-11 h-6 flex items-center bg-gray-600 rounded-full p-1 cursor-pointer transition duration-300 ${network === "mainnet" ? "bg-purple-600" : "bg-gray-700"}`}
+              >
+                <motion.div
+                  layout
+                  className="w-4 h-4 bg-white rounded-full shadow-md"
+                  animate={{ x: network === "mainnet" ? 20 : 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
       )}
     </div>
   );
