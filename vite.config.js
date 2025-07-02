@@ -9,10 +9,4 @@ export default defineConfig({
     tailwindcss(),
     nodePolyfills(),
   ],
-  build: {
-    outDir: 'dist',
-  },
-  server: {
-    historyApiFallback: true
-  },
 })

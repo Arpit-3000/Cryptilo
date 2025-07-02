@@ -133,28 +133,29 @@ const Wallet = () => {
         initWallet();
     }, [username, seed]);
 
+    const fetchWalletBalance = async () => {
+        const selectedWallet = wallets[selectedWalletIndex];
+        if (!selectedWallet || !selectedWallet.publicKey) return;
+
+        try {
+            setIsBalanceLoading(true);
+            const connection = new Connection(solanaAlchemy, "confirmed");
+            const balance = await connection.getBalance(new PublicKey(selectedWallet.publicKey));
+            const sol = balance / LAMPORTS_PER_SOL;
+            const usd = sol * 145;
+            setWalletBalance(usd.toFixed(6));
+        } catch (error) {
+            console.error("Error fetching wallet balance:", error);
+            setWalletBalance("0.00");
+        } finally {
+            setIsBalanceLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchWalletBalance = async () => {
-            const selectedWallet = wallets[selectedWalletIndex];
-            if (!selectedWallet || !selectedWallet.publicKey) return;
-
-            try {
-                setIsBalanceLoading(true);
-                const connection = new Connection(solanaAlchemy, "confirmed");
-                const balance = await connection.getBalance(new PublicKey(selectedWallet.publicKey));
-                const sol = balance / LAMPORTS_PER_SOL;
-                const usd = (sol * 145)
-                setWalletBalance(usd.toFixed(6));
-            } catch (error) {
-                console.error("Error fetching wallet balance:", error);
-                setWalletBalance("0.00");
-            } finally {
-                setIsBalanceLoading(false);
-            }
-        };
-
         fetchWalletBalance();
-    }, [selectedWalletIndex, wallets.length]);
+    }, [selectedWalletIndex, wallets.length,network]);
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-950 text-white px-4 sm:px-6 py-6">
@@ -508,18 +509,19 @@ const Wallet = () => {
                                         }
 
                                         tx.sign(keypair);
-                                        const sig = await connection.sendRawTransaction(tx.serialize(), {
+                                        const sig = await connection.sendRawTransaction
+                                        (tx.serialize(), {
                                             skipPreflight: true,
                                         });
-                                        setTimeout(() => {
-                                             navigate(0);
-                                        }, 1000);
+                                        await fetchWalletBalance();
+                                       
                                         toast.success(<div className="max-w-[300px] break-words text-sm">
                                             ✅ Transaction Successful! Sign:{" "}
                                             <span title={sig} className="underline cursor-pointer">
                                                 {sig.slice(0, 10)}...
                                             </span>
                                         </div>);
+                                         
 
 
 
