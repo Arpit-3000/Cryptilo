@@ -512,7 +512,7 @@ const Wallet = () => {
                                             skipPreflight: true,
                                         });
                                         setTimeout(() => {
-                                             window.location.href = "/wallet";
+                                             navigate(0);
                                         }, 1000);
                                         toast.success(<div className="max-w-[300px] break-words text-sm">
                                             ✅ Transaction Successful! Sign:{" "}
