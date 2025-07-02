@@ -14,7 +14,7 @@ const [network, setNetwork] = useState("devnet");
   const setNetworkAndPersist = (newNetwork) => {
     setNetwork(newNetwork);
     localStorage.setItem("selectedNetwork", newNetwork);
-    window.location.reload();
+    window.location.href = "/wallet";
   };
   const solanaAlchemy = network === "devnet"
     ? import.meta.env.VITE_SOLANA_ALCHEMY_DEVNET
