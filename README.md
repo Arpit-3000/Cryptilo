@@ -1,4 +1,4 @@
-# 🚀 Cryptiloe — Solana Wallet Web App
+# 🚀 Cryptilo — Solana Wallet Web App
 
 Cryptiloe is a modern and secure Solana blockchain wallet built using React and Firebase. It enables users to **create wallets**, **send and receive SOL**, and **view transaction history** — all within a sleek, responsive UI.
 
