@@ -24,7 +24,7 @@ function App() {
           },
         }}
       />
-       <Router>
+       
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/register" element={<Register />} />
@@ -32,7 +32,7 @@ function App() {
         <Route path="/manage-wallets"element={<ManageWallets/>}/>
         <Route path="solana-details" element={<SolanaDetails/>}/>
       </Routes>
-    </Router>
+    
     </>
   )
 }
