@@ -108,7 +108,7 @@ const SettingsMenu = ({ username, mnemonic }) => {
               Manage Wallets
             </button>
             <button
-              onClick={() => alert("Settings Coming Soon")}
+              onClick={() => toast.success("Settings Coming Soon")}
               className="w-full text-left px-4 py-2 hover:bg-purple-700 transition"
             >
               Preferences
@@ -194,7 +194,7 @@ const SettingsMenu = ({ username, mnemonic }) => {
               </button>
               <button
                 onClick={() => {
-                  handleDeleteAccount;
+                  handleDeleteAccount();
                   setPassword("");
                 }}
                 className="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg"
@@ -208,11 +208,11 @@ const SettingsMenu = ({ username, mnemonic }) => {
 
       {/*Developer Settings Menu*/}
       {showDevMenu && (
-      <motion.div
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  exit={{ opacity: 0, y: 10 }}
-  className="
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="
     absolute z-50 
     left-2 right-2 sm:right-2 sm:left-auto
     bg-zinc-800 
@@ -223,7 +223,7 @@ const SettingsMenu = ({ username, mnemonic }) => {
     w-[90vw] sm:w-64 
     max-w-xs px-4 py-3
   "
->
+        >
 
           <h3 className="text-sm text-purple-300 font-semibold mb-2">Select Network</h3>
           <div className="flex flex-col gap-3">
@@ -234,7 +234,7 @@ const SettingsMenu = ({ username, mnemonic }) => {
                 <p className="text-xs text-gray-400">For testing transactions</p>
               </div>
               <div
-                onClick={() => {setNetwork("devnet");setShowDevMenu(false);setIsOpen(false)}}
+                onClick={() => { setNetwork("devnet"); setShowDevMenu(false); setIsOpen(false) }}
                 className={`w-11 h-6 flex items-center bg-gray-600 rounded-full p-1 cursor-pointer transition duration-300 ${network === "devnet" ? "bg-purple-600" : "bg-gray-700"}`}
               >
                 <motion.div
@@ -253,7 +253,7 @@ const SettingsMenu = ({ username, mnemonic }) => {
                 <p className="text-xs text-gray-400">Live network</p>
               </div>
               <div
-                onClick={() =>{setNetwork("mainnet");setShowDevMenu(false);setIsOpen(false)}}
+                onClick={() => { setNetwork("mainnet"); setShowDevMenu(false); setIsOpen(false) }}
                 className={`w-11 h-6 flex items-center bg-gray-600 rounded-full p-1 cursor-pointer transition duration-300 ${network === "mainnet" ? "bg-purple-600" : "bg-gray-700"}`}
               >
                 <motion.div
@@ -274,4 +274,3 @@ const SettingsMenu = ({ username, mnemonic }) => {
 export default SettingsMenu;
 
 
-// AHpwy3FGYaNchDgbtcr2QFL7yYnx4eyf2rn7CPGxkMSj

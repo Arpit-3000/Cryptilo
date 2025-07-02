@@ -242,6 +242,7 @@ const Wallet = () => {
                                     if (action === "Receive") setShowReceiveModal(true);
                                     if (action === "Buy") window.open("https://www.binance.com/en/buy-sell-crypto", "_blank");
                                     if (action === "Send") setShowSendModal(true);
+                                    if (action === "Swap") toast.success("Coming Soon!");
                                 }}
                             >
                                 {action}
@@ -494,18 +495,31 @@ const Wallet = () => {
                                             })
                                         );
 
+                                        // Estimate fee
+                                        const messageV0 = tx.compileMessage();
+                                        const feeInLamports = await connection.getFeeForMessage(messageV0);
+                                        const feeInSOL = feeInLamports.value / LAMPORTS_PER_SOL;
+
+                                        // If amount < fee, block the transaction
+                                        if (parseFloat(sendAmount) < feeInSOL) {
+                                            toast.error(`⚠️ Amount too low! Must be greater than network fee of ${feeInSOL.toFixed(6)} SOL`);
+                                            setSendingSol(false);
+                                            return;
+                                        }
+
                                         tx.sign(keypair);
                                         const sig = await connection.sendRawTransaction(tx.serialize(), {
                                             skipPreflight: true,
                                         });
-                                        toast.success(`✅ Transaction submitted: ${sig}`);
-
-
-                                        connection.confirmTransaction(sig, "confirmed").then(() => {
-                                            toast.success(`✅ Transaction Successfull! Sign: ${sig}`);
-                                        }).catch(() => {
-
-                                        });
+                                        setTimeout(() => {
+                                            window.location.reload(); // ✅ reload after 1 sec
+                                        }, 1000);
+                                        toast.success(<div className="max-w-[300px] break-words text-sm">
+                                            ✅ Transaction Successful! Sign:{" "}
+                                            <span title={sig} className="underline cursor-pointer">
+                                                {sig.slice(0, 10)}...
+                                            </span>
+                                        </div>);
 
 
 
@@ -551,4 +565,3 @@ const Wallet = () => {
 export default Wallet;
 
 
-//FneFnjCRKsktygxD5qmequWRxeHcyZw6nitY3Fv6o88w - 5 sols

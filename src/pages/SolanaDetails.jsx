@@ -4,11 +4,11 @@ import { getDatabase, ref, get } from "firebase/database";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Connection, PublicKey } from "@solana/web3.js";
 
-const ALCHEMY_URL = "https://solana-devnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
+const ALCHEMY_URL = import.meta.env.VITE_SOLANA_ALCHEMY_MAINNET;
 
 const SolanaDetails = () => {
     const loc = useLocation();
-    const navigate = useNavigate(); // 🧭 for back navigation
+    const navigate = useNavigate(); 
 
     const username = loc.state?.username || localStorage.getItem("username");
     const walletIndexRaw = loc.state?.selectedWalletIndex || localStorage.getItem("selectedWalletIndex");

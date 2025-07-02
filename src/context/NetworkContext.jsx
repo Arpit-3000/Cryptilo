@@ -10,15 +10,15 @@ const [network, setNetwork] = useState("devnet");
     if (savedNetwork) setNetwork(savedNetwork);
   }, []);
 
-  // 🟣 When network changes, save it to localStorage
+ 
   const setNetworkAndPersist = (newNetwork) => {
     setNetwork(newNetwork);
     localStorage.setItem("selectedNetwork", newNetwork);
     window.location.reload();
   };
   const solanaAlchemy = network === "devnet"
-    ? "https://solana-devnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM"
-    : "https://solana-mainnet.g.alchemy.com/v2/fJpASw5K4NIUlSgCQfDHMG89HKsrmMZM";
+    ? import.meta.env.VITE_SOLANA_ALCHEMY_DEVNET
+    : import.meta.env.VITE_SOLANA_ALCHEMY_MAINNET;
 
   return (
     <NetworkContext.Provider value={{ network, setNetwork: setNetworkAndPersist, solanaAlchemy }}>
