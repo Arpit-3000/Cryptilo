@@ -3,8 +3,8 @@
 Cryptiloe is a modern and secure Solana blockchain wallet built using React and Firebase. It enables users to **create wallets**, **send and receive SOL**, and **view transaction history** — all within a sleek, responsive UI.
 
 ### 🌐 Live Preview  
-🔗 [Try Cryptiloe Live](https://your-deployed-site.vercel.app)  
-*(Replace with actual deployed URL)*
+🔗 [Try Cryptiloe Live](https://cryptilo.vercel.app/)  
+
 
 ---
 
