@@ -50,9 +50,9 @@ const Register = () => {
 
   await set(ref(db1, `users/${username}`), {
     password: hashedPassword,
-    mnemonic: encryptedMnemonic,
     createdAt: new Date().toISOString(),
   });
+  localStorage.setItem(`mnemonic_${username}`, encryptedMnemonic);
   navigate("/wallet", { state: { username,mnemonic,password } });
 };
 

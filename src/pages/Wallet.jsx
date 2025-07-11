@@ -81,10 +81,9 @@ const Wallet = () => {
         await set(ref(db, `users/${username}/wallets/${wallets.length}`), {
             name: newWalletName,
             publicKey: newPubKey,
-            privateKey: encryptedPrivateKey,
             createdAt: new Date().toISOString(),
         });
-
+        localStorage.setItem(`privateKey_${username}_${wallets.length}`, encryptedPrivateKey);
         toast.success("\u{1FA99} New wallet created")
         setWallets([...wallets, { name: newWalletName, publicKey: newPubKey }]);
         setSelectedWalletIndex(wallets.length);
@@ -122,10 +121,9 @@ const Wallet = () => {
                 await set(ref(db, `users/${username}/wallets/0`), {
                     name: username + "'s Wallet",
                     publicKey: pubKey,
-                    privateKey: encryptedPrivateKey,
                     createdAt: new Date().toISOString(),
                 });
-
+                localStorage.setItem(`privateKey_${username}_0`, encryptedPrivateKey);
                 setWallets([{ name: username, publicKey: pubKey }]);
             }
         };

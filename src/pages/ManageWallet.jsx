@@ -156,10 +156,12 @@ const ManageWallets = () => {
             }
 
             //Fetching
-            const userRef = ref(db, `users/${username}/mnemonic`);
-            const mnemonicSnap = await get(userRef);
-            const encryptedMnemonic = mnemonicSnap.val();
-
+         
+            const encryptedMnemonic = localStorage.getItem(`mnemonic_${username}`);
+            if (!encryptedMnemonic) {
+                toast.error("Mnemonic not found in localStorage");
+                return;
+            }
             //Decrypting
             const bytes = CryptoJS.AES.decrypt(encryptedMnemonic, password);
             const decryptedMnemonic = bytes.toString(CryptoJS.enc.Utf8);
@@ -194,10 +196,11 @@ const ManageWallets = () => {
                 return;
             }
 
-            const privateKeyRef = ref(db, `users/${username}/wallets/${selectedWallet.index}/privateKey`);
-            const privateKeySnap = await get(privateKeyRef);
-            const encryptedPrivateKey = privateKeySnap.val();
-
+            const encryptedPrivateKey = localStorage.getItem(`privateKey_${username}_${selectedWallet.index}`);
+            if (!encryptedPrivateKey) {
+                toast.error("Private key not found in localStorage");
+                return;
+            }
             const bytes = CryptoJS.AES.decrypt(encryptedPrivateKey, password);
             const decrypted = bytes.toString(CryptoJS.enc.Utf8);
 
