@@ -25,7 +25,7 @@ const WelcomePage = () => {
 
     const mn = generateMnemonic();
     setMnemonic(mn);
-    console.log(mn);
+    
 
   }
 

@@ -474,8 +474,13 @@ const Wallet = () => {
                                         const walletSnap = await get(ref(db, `users/${username}/wallets/${selectedWalletIndex}`));
                                         if (!walletSnap.exists()) throw new Error("Wallet not found");
 
-                                        const { privateKey } = walletSnap.val();
-                                        const decrypted = CryptoJS.AES.decrypt(privateKey, enteredPassword).toString(CryptoJS.enc.Utf8);
+                                        const encryptedPrivateKey = localStorage.getItem(`privateKey_${username}_${selectedWalletIndex}`);
+                                        if (!encryptedPrivateKey) {
+                                            toast.error("Private key not found in localStorage");
+                                            return;
+                                        }
+                                        const bytes = CryptoJS.AES.decrypt(encryptedPrivateKey, enteredPassword);
+                                        const decrypted = bytes.toString(CryptoJS.enc.Utf8);
                                         const keypair = Keypair.fromSecretKey(bs58.decode(decrypted));
 
                                         const connection = new Connection(solanaAlchemy, "confirmed");
